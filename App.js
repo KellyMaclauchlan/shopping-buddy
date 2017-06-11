@@ -126,7 +126,7 @@ const HomeScreen = ({
     <REButton
       raised
       icon={{name: 'home', size: 32}}
-      buttonStyle={{backgroundColor: 'red', borderRadius: 10}}
+      buttonStyle={{backgroundColor: 'red', borderRadius: 10,overflow: 'hidden'}}
       textStyle={{textAlign: 'center'}}
       title={`Welcome to\nReact Native Elements`} 
       onPress={toggleSlider}

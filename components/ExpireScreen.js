@@ -1,17 +1,21 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, Alert, TouchableHighlight, Image, Switch, ButtonGroup} from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, TouchableHighlight, Image, Switch, ButtonGroup, FlatList, ScrollView} from 'react-native';
+import { ButtonGroup as REButtonGroup } from 'react-native-elements';
 import Calendar from 'react-native-calendar';
+import ListItem from './ListItem'
+const _=require('lodash');
 export default class ExpireScreen extends React.Component {
   constructor(){
     super();
     this.state = {
       switchValue: true,
       timeFrames:["This Week", "This Month", "All"],
-      week:["1", "2", "3"],
-      month:["4", "5"],
-      allList:["1", "2", "3","4","5","6"],
-      listSource: ["1", "2", "3","4","5","6"],
+      week:[{text:"1"}, {text:"2"}, {text:"3"}],
+      month:[{text:"5"}, {text:"4"}],
+      allList:[{text:"1"}, {text:"2"}, {text:"3"},{text:"4"},{text:"5"},{text:"6"}],
+      listSource: [{text:"1"}, {text:"2"}, {text:"3"},{text:"4"},{text:"5"},{text:"6"}],
       selectedIndex:2,
+
     };
   }
   static navigationOptions = {
@@ -37,19 +41,30 @@ export default class ExpireScreen extends React.Component {
     this.setState({selectedIndex: value });
   }
 
+  removeItem(item){
+    _.without(this.state.listSource, item)
+  }
+
+  addItemToCart(item){
+    //Alert.alert("item added to cart",item.text);
+  }
+
 
 
 
     render() {
       const { switchValue : showCalendar, timeFrames : buttons, selectedIndex : selectedIndex } = this.state; 
       return (
-            <View>
+            <ScrollView>
+            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
+            <Text style={{fontSize: 20}}>Show Calendar </Text>
             <Switch 
               onValueChange={()=>{
                 this.toggleCalendar()
               }} 
               value={this.state.switchValue}
             />
+            </View>
 
             { showCalendar ?  
               <Calendar
@@ -60,14 +75,23 @@ export default class ExpireScreen extends React.Component {
               showControls
               /> : null
             }
-            <ButtonGroup
-              onPress={this.selectTimeFrame}
+            <REButtonGroup
+              onPress={(val)=>this.selectTimeFrame(val)}
               selectedIndex={selectedIndex}
               buttons={buttons}
-              containerStyle={{height: 100}}
-              />
+              containerStyle={{height: 50}}
+              buttonStyle={{marginRight:10,marginLeft:10,borderRadius:10,borderWidth: 1,overflow: 'hidden', backgroundColor:'#7CBAB2'}}
+              textStyle={{color:'black'}}
+              selectedTextStyle={{fontWeight: 'bold',color:'black'}}
+            />
 
-            </View>
+            <FlatList
+              data={this.state.listSource}
+              renderItem={({item}) => <ListItem item={item} remove={item => this.removeItem(item)} addToCart={item=>this.addItemToCart(item)} />}
+            />
+
+            </ScrollView>
+
       );
     }
 }
