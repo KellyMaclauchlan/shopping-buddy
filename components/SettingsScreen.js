@@ -10,6 +10,8 @@ import {
   Image,
   TextInput,
   FlatList,
+  ScrollView,
+  Switch,
 } from 'react-native';
 import { 
   List as REList,
@@ -29,7 +31,7 @@ const inputStyle={
 };
 
 
-class PresentationalRecepieScreen extends React.Component {
+class PresentationalSettingScreen extends React.Component {
 constructor(){
     super();
     this.state = {
@@ -114,31 +116,77 @@ const ItemStyle={
   paddingVertical: 10,
 };
 
-
-export default class RecepieScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Recipe',
-  };
-  constructor(props){
-    super(props)
+export default class SettingsScreen extends React.Component {
+  constructor(){
+    super();
     this.state = {
+      switchValue: true,
+      timeFrames:["This Week", "This Month", "All"],
+      week:[{text:"1"}, {text:"2"}, {text:"3"}],
+      month:[{text:"5"}, {text:"4"}],
+      allList:[{text:"1"}, {text:"2"}, {text:"3"},{text:"4"},{text:"5"},{text:"6"}],
+      listSource: [{text:"1"}, {text:"2"}, {text:"3"},{text:"4"},{text:"5"},{text:"6"}],
+      selectedIndex:2,
       items: _.map([
+        'bread',
+        'tea',
+        'milk',
+        'beef',
+      ], text => ({ text, id: _.uniqueId() }) ),
+      items2: _.map([
         'All',
         'Fridge',
         'Freezer',
         'Pantry',
       ], text => ({ text, id: _.uniqueId() }) ),
-      showRecipie:false,
-      selectedIndex:0,
-      selectedItem:{name:"tuna",time:"40 min", ovenSetting:"400", steps:"cut the chicken, put it in a bowl",ingrediants:"eggs, chicken, beef"},
+
     };
   }
+  static navigationOptions = {
+    title: 'Settings',
+  };  
 
-  render() {
-    const { items, showRecipie } = this.state;
-    return <View>
-    { !showRecipie ? 
-    <PresentationalRecepieScreen 
+  toggleCalendar(value){
+    this.setState({switchValue: !this.state.switchValue });
+  }
+
+  
+
+  removeItem(item){
+    _.without(this.state.listSource, item)
+  }
+
+  addItemToCart(item){
+    //Alert.alert("item added to cart",item.text);
+  }
+
+
+
+
+    render() {
+      const { switchValue : showCalendar, timeFrames : buttons, selectedIndex : selectedIndex, items, items2 } = this.state; 
+      return (
+            <ScrollView>
+            <Text>Groceries</Text>
+            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
+            <Text style={{fontSize: 20}}>Add removed items to pantry </Text>
+            <Switch 
+              onValueChange={()=>{
+                this.toggleCalendar()
+              }} 
+              value={this.state.switchValue}
+            />
+            </View>
+            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
+            <Text style={{fontSize: 20}}>Use defalut grocery List </Text>
+            <Switch 
+              onValueChange={()=>{
+                this.toggleCalendar()
+              }} 
+              value={this.state.switchValue}
+            />
+            </View>
+            <PresentationalSettingScreen 
       onAddItem={(new_item)=>{
         this.setState({
           items: items.concat([{text: new_item, id: _.uniqueId()}]),
@@ -161,92 +209,41 @@ export default class RecepieScreen extends React.Component {
         });
       }}
     />
-  :
-  <View>
-  <Text>{this.state.selectedIndex}</Text>
-  <View style={{flexDirection:'row'}}>
-  <Text> Name </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.name}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.name=text;
-          this.setState({selectedItem: ite});
-        
+
+
+            <Text>Pantry</Text>
+            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
+            <Text style={{fontSize: 20}}>add removed items to grocery list </Text>
+            <Switch 
+              onValueChange={()=>{
+                this.toggleCalendar()
+              }} 
+              value={this.state.switchValue}
+            />
+
+            </View>
+<PresentationalSettingScreen 
+      onAddItem={(new_item)=>{
+        this.setState({
+          items2: items2.concat([{text: new_item, id: _.uniqueId()}]),
+        })
       }}
-    />
-    </View>
-    <View style={{flexDirection:'row'}}>
-  <Text> Cook Time </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.cook}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.cook=text;
-          this.setState({selectedItem: ite});
-        
+      onDismissItem={ ({id}) =>{
+        const { items } = this.state;
+        this.setState({
+          items2: _.reject(items, { id }),
+        })
       }}
+      items={items2}
+      
     />
-    </View>
-    <View style={{flexDirection:'row'}}>
-    <Text> Oven Setting </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.ovenSetting}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.oven=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
-    <View style={{flexDirection:'row'}}>
-    <Text> Steps </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.steps}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.steps=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
+            
 
-    <View style={{flexDirection:'row'}}>
-    <Text> Ingrediants </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.ingrediants}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.ingrediants=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
+            </ScrollView>
 
-
-
-
-    </View>
-  }
-
-    </View>
-  }
-  
+      );
+    }
 }
- 
 
 const styles = StyleSheet.create({
   container: {

@@ -24,6 +24,8 @@ import UnitConvertScreen from './components/UnitConvertScreen';
 import ExpireScreen from './components/ExpireScreen';
 import PantryScreen from './components/PantryScreen';
 import RecipeScreen from './components/RecipeScreen';
+import ItemScreen from './components/ItemScreen';
+import SettingsScreen from './components/SettingsScreen';
 import { StackNavigator } from 'react-navigation';
 const _ = require('lodash');
 
@@ -68,6 +70,16 @@ const sections = [
     nav_name: "Recipe",
     image: book_img,
     name:'Recipe Planner',
+  },
+  {
+    name: "Item View",
+    nav_name: 'Item',
+    image: note_img,
+  },
+  {
+    nav_name: "Settings",
+    image: book_img,
+    name:'Settings',
   },
 ];
 
@@ -198,6 +210,8 @@ const SimpleApp = StackNavigator({
   Recipe: { screen: RecipeScreen }, 
   Pantry: { screen: PantryScreen }, 
   UnitConvert: { screen: UnitConvertScreen }, 
+  Item: { screen: ItemScreen }, 
+  Settings: { screen: SettingsScreen }, 
 });
 AppRegistry.registerComponent('shopping-buddy', () => SimpleApp);
 export default SimpleApp;

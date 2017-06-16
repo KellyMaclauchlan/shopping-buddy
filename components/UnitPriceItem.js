@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button, Alert, TouchableHighlight, Image, TextInput } from 'react-native';
-
+import _ from 'lodash';
 
 const remove_img = require('../icons/remove.png');
 const cart_img = require('../icons/cart.png');
-const ItemStyle={
+
+const itemStyle={
   marginVertical: 10,
   height: 60, 
   borderColor: '#bbb', 
@@ -13,32 +14,65 @@ const ItemStyle={
   paddingHorizontal: 20,
   justifyContent:'space-between',
 };
+const inputStyle={
+  borderColor: '#bbb', 
+  backgroundColor:'#fefefe',
+  borderWidth: 1,
+  width:70,
+  justifyContent:'space-between',
+};
+
 export default class UnitPriceItem extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {text: ''};
+    this.state = {
+      rightText: '',
+      leftText: '',
+      endText:'',
+    };
   }
 
 
-    render() {
-      return (
-			<View style={ItemStyle}>
-				<View style={{flexDirection:'row'}}>
-					<Text>Name</Text>
-					<TextInput style={{backgroundColor:'#7CBAB2'}} placeHolder="Item 1" onChangeText={(text) => this.setState({text})}/>
-				</View>
-				<View style={{flexDirection:'row'}}>
-					<Text>Price</Text>
-					<TextInput placeHolder='0.00'/>
-				</View>
-				<View style={{flexDirection:'row'}}>
-					<Text>Size</Text>
-					<TextInput placeHolder='1'/>
-					<Text>Unit</Text>
-				</View>
+  render() {
+    return (
+		<View style={itemStyle}>
+			<View style={{flexDirection:'row'}}>
+				<Text>Name:</Text>
+        <TextInput 
+          style={inputStyle}
+          placeholder="item 1"
+          value={this.state.leftText}
+          onChangeText={text => { 
+            this.setState({leftText: text});
+          }}
+        />
 			</View>
-      );
-    }
+			<View style={{flexDirection:'row'}}>
+				<Text>Price:</Text>
+        <TextInput 
+          style={inputStyle}
+          placeholder="0.00"
+          value={this.state.endText}
+          onChangeText={text => { 
+            this.setState({endText: text});
+          }}
+        />
+			</View>
+			<View style={{flexDirection:'row'}}>
+				<Text>Size:</Text>
+        <TextInput 
+          style={inputStyle}
+          placeholder="1"
+          value={this.state.rightText}
+          onChangeText={text => { 
+            this.setState({rightText: text});
+          }}
+        />
+			<Text>Unit</Text>
+			</View>
+		</View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
