@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button, Alert, TouchableHighlight, Image, TextInput } from 'react-native';
-
+var convert = require('convert-units')
 const itemStyle={
   marginVertical: 10,
   height: 60, 
@@ -29,11 +29,21 @@ export default class UnitConvertScreen extends React.Component {
       resultText:'',
     };
   }
+  unitConvert(amount, unit1, unit2){
+    var result ="";
+    try{
+      result = convert(val1).from(unit1).to(unit2) +""+unit2;
+    }catch(err){
+      result = " an Invalid Conversion"
+    }
+    return result;
+  }
   static navigationOptions = {
     title: 'Unit Price Calculator',
   };
   calculate(){
-    this.setState({resultText:"It is:"+this.state.value+" "+this.state.unit2});
+    var result = this.unitConvert(this.state.value, this.state.unit1, this.state.unit2);
+    this.setState({resultText:"It is:"+result});
     this.setState({calculate:true})
   };
 

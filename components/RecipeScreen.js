@@ -10,6 +10,7 @@ import {
   Image,
   TextInput,
   FlatList,
+  AsyncStorage,
 } from 'react-native';
 import { 
   List as REList,
@@ -121,16 +122,16 @@ export default class RecepieScreen extends React.Component {
   };
   constructor(props){
     super(props)
+    var list; 
+    AsyncStorage.getItem('recipeList', (err, result) => {
+            list = JSON.parse(result);
+      
+          });
     this.state = {
-      items: _.map([
-        'All',
-        'Fridge',
-        'Freezer',
-        'Pantry',
-      ], text => ({ text, id: _.uniqueId() }) ),
+      items: list,
       showRecipie:false,
       selectedIndex:0,
-      selectedItem:{name:"tuna",time:"40 min", ovenSetting:"400", steps:"cut the chicken, put it in a bowl",ingrediants:"eggs, chicken, beef"},
+      selectedItem:{text:"tuna",time:"40 min", ovenSetting:"400", steps:"cut the chicken, put it in a bowl",ingrediants:"eggs, chicken, beef"},
     };
   }
 
@@ -140,8 +141,17 @@ export default class RecepieScreen extends React.Component {
     { !showRecipie ? 
     <PresentationalRecepieScreen 
       onAddItem={(new_item)=>{
+        var item ={text:new_item,time:"", ovenSetting:"", steps:"",ingrediants:""};
         this.setState({
-          items: items.concat([{text: new_item, id: _.uniqueId()}]),
+          items: items.concat([item]),
+        })
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+    
+        });
+       this.setState({
+          selectedItem:item,
+          selectedIndex: items.indexOf(item),
+          showRecipie: true
         })
       }}
       onDismissItem={ ({id}) =>{
@@ -149,32 +159,46 @@ export default class RecepieScreen extends React.Component {
         this.setState({
           items: _.reject(items, { id }),
         })
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+    
+        });
       }}
       items={items}
       onClickItem={ ({id}) =>{
         const { items } = this.state;
         this.setState({
+          selectedItem:item,
+          selectedIndex: items.indexOf(item),
           showRecipie: true
-        });
-        this.setState({
-          selectedIndex: id
-        });
+        })
       }}
     />
   :
   <View>
+  <Button
+   title = "Back"
+    onPress= {()=> this.setState({
+                showRecipie:false,
+                })}
+              />
+  
   <Text>{this.state.selectedIndex}</Text>
   <View style={{flexDirection:'row'}}>
   <Text> Name </Text>
     <TextInput 
       style={inputStyle}
-      value={this.state.selectedItem.name}
+      value={this.state.selectedItem.text}
       onChangeText={text => { 
       var ite
           ite=this.state.selectedItem;
-          ite.name=text;
+          ite.text=text;
           this.setState({selectedItem: ite});
-        
+          var itel;
+          itel = this.state.items;
+          itel[this.state.selectedIndex]=ite;
+          this.setState({items:itle});
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+        });
       }}
     />
     </View>
@@ -188,7 +212,12 @@ export default class RecepieScreen extends React.Component {
           ite=this.state.selectedItem;
           ite.cook=text;
           this.setState({selectedItem: ite});
-        
+          var itel;
+          itel = this.state.items;
+          itel[this.state.selectedIndex]=ite;
+          this.setState({items:itle});
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+        });
       }}
     />
     </View>
@@ -202,7 +231,12 @@ export default class RecepieScreen extends React.Component {
           ite=this.state.selectedItem;
           ite.oven=text;
           this.setState({selectedItem: ite});
-        
+          var itel;
+          itel = this.state.items;
+          itel[this.state.selectedIndex]=ite;
+          this.setState({items:itle});
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+        });
       }}
     />
     </View>
@@ -216,7 +250,12 @@ export default class RecepieScreen extends React.Component {
           ite=this.state.selectedItem;
           ite.steps=text;
           this.setState({selectedItem: ite});
-        
+          var itel;
+          itel = this.state.items;
+          itel[this.state.selectedIndex]=ite;
+          this.setState({items:itle});
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+        });
       }}
     />
     </View>
@@ -227,11 +266,16 @@ export default class RecepieScreen extends React.Component {
       style={inputStyle}
       value={this.state.selectedItem.ingrediants}
       onChangeText={text => { 
-      var ite
+      var ite;
           ite=this.state.selectedItem;
           ite.ingrediants=text;
           this.setState({selectedItem: ite});
-        
+          var itel;
+          itel = this.state.items;
+          itel[this.state.selectedIndex]=ite;
+          this.setState({items:itle});
+        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
+        });
       }}
     />
     </View>

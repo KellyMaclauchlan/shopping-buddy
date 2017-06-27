@@ -9,6 +9,7 @@ import {
   Image,
   TextInput,
   FlatList,
+  AsyncStorage,
 } from 'react-native';
 import { 
   List as REList,
@@ -28,26 +29,79 @@ export default class GroceryScreen extends React.Component {
   };
   constructor(props){
     super(props)
+    
     this.state = {
-      items: _.map([
-        'Motherfucking cheetos',
-        'Salad',
-      ], text => ({ text, id: _.uniqueId() }) ),
+      items: [],
+      toPantry:[],
+      pantryList:[],
+      isLoading:true,
     };
   }
+  componentWillMount(){
+    var list
+    AsyncStorage.multiGet(['groceryList', 'groceryToPantry','pantryList']).then(results => {
+        const [[k1,grocery_json], [k2,pantry_json], [k3,pantryList_json]] = results;
+        const list = JSON.parse(grocery_json);
+        const pantry = JSON.parse(pantry_json);
+        const pantryList = JSON.parse(pantryList_json);
+
+        this.setState({
+          toPantry: pantry,
+          items: list,
+          isLoading: false,
+          pantryList: pantryList
+        })
+
+    });
+  }
+
   render() {
-    const { items } = this.state;
+    const { items, loading } = this.state;
+
+    if(loading){ return <Text> Loading... </Text>;  }
+
+
     return <AddRemoveList 
       onAddItem={(new_item)=>{
+        this.setState({isSaving:true});
+        var item={text:new_item, expiryDate:null, defaultItem:false, pantryLocation:null}
+        var ites=this.state.items;
         this.setState({
-          items: items.concat([{text: new_item, id: _.uniqueId()}]),
+          items: ites.concat([item]),
         })
+        AsyncStoragemultiSet([
+      ['groceryList', JSON.stringify(this.state.items)]
+    ]).then(()=>{
+      this.setState({
+        isSaving: false,
+      });
+    });
       }}
+
       onDismissItem={ ({id}) =>{
+        this.setState({isSaving:true});
         const { items } = this.state;
         this.setState({
           items: _.reject(items, { id }),
         })
+        let saveList=[
+            ['groceryList', JSON.stringify(this.state.items)]
+          ];
+        if(this.state.toPantry){
+          this.setState({
+          pantryList: this.state.pantryList.concat([item]),
+          })
+         saveList=[
+            ['pantryList', JSON.stringify(this.state.pantryList)],
+            ['groceryList', JSON.stringify(this.state.items)]
+          ];
+
+        }
+         AsyncStoragemultiSet(saveList).then(()=>{
+            this.setState({
+              isSaving: false,
+            });
+          });
       }}
       items={items}
     />

@@ -10,6 +10,7 @@ import {
   Image,
   TextInput,
   FlatList,
+  AsyncStorage,
 } from 'react-native';
 import { 
   List as REList,
@@ -109,30 +110,120 @@ export default class PantryScreen extends React.Component {
   };
   constructor(props){
     super(props)
+
     this.state = {
-      items: _.map([
-        'All',
-        'Fridge',
-        'Freezer',
-        'Pantry',
-      ], text => ({ text, id: _.uniqueId() }) ),
+      categories: [],
+      items: [],
+      inCategories: true, 
+      useList: [],
+      currentCategory: null,
+      toGrocery:false,
+      groceryList:[],
+      isSaving:false,
+      isLoading:true,
     };
   }
+
+  componentWillMount(){
+    var list
+    AsyncStorage.multiGet(['groceryList', 'pantryToGrocery','pantryList','pantryCategoryList']).then(results => {
+        const [[k1,grocery_json], [k2,pantry_json], [k3,pantryList_json], [k4, pantryCat_json]] = results;
+        const list = JSON.parse(grocery_json);
+        const pantry = JSON.parse(pantry_json);
+        const pantryList = JSON.parse(pantryList_json);
+        const pantryCat = JSON.parse(pantryCat_json);
+
+        this.setState({
+          toGrocery: pantry,
+          items: pantryList,
+          isLoading: false,
+          groceryList: list,
+          categories:pantryCat,
+        });
+
+    });
+  }
+
+  goToCategory(category){
+    var cat = category.text==="All"? null: category.text;
+    var list = this.state.items.map(item => item.pantryLocation===category.text);
+    currentCategory=category.text;
+    this.setState({
+          useList: list,
+        })
+  }
+
   render() {
-    const { items } = this.state;
+    const { items, inCategories, useList } = this.state;
+    { inCategories ?  
+              <Button
+              title = "Back"
+              onPress= {()=> this.setState({
+                useList: categories,
+                inCategories:false,
+                })}
+              /> : null
+            }
     return <PresentationalPantryScreen 
       onAddItem={(new_item)=>{
+        this.setState({isSaving:true});
+        if(inCategories){
+          var cat = currentCategory.text==="All"? null: currentCategory.text;
+          var item={text:new_item,expiryDate:null,defaultItem:false, pantryLocation:cat};
+          var ites=this.state.items;
         this.setState({
-          items: items.concat([{text: new_item, id: _.uniqueId()}]),
+          items: ites.concat([item]),
         })
+        AsyncStoragemultiSet([
+      ['pantryList', JSON.stringify(this.state.items)]
+    ]).then(()=>{
+      this.setState({
+        isSaving: false,
+      });
+    });
+      }else{
+        var ites=this.state.categories;
+        this.setState({
+          categories: ites.concat([{text: new_item,}]),
+        })
+        AsyncStoragemultiSet([
+              ['pantryCategoryList', JSON.stringify(this.state.categories)]
+            ]).then(()=>{
+              this.setState({
+                isSaving: false,
+              });
+            });
+      }
       }}
       onDismissItem={ ({id}) =>{
+        if(inCategories){
+        this.setState({isSaving:true});
         const { items } = this.state;
         this.setState({
           items: _.reject(items, { id }),
         })
+        let saveList=[
+            ['pantryList', JSON.stringify(this.state.items)]
+          ];
+        if(this.state.toPantry){
+          this.setState({
+          groceryList: this.state.groceryList.concat([item]),
+          })
+         saveList=[
+            ['groceryList', JSON.stringify(this.state.groceryList)],
+            ['pantryList', JSON.stringify(this.state.items)]
+          ];
+
+        }
+         AsyncStoragemultiSet(saveList).then(()=>{
+            this.setState({
+              isSaving: false,
+            });
+          });
+        }
+        
       }}
-      items={items}
+      items={useList}
     />
   }
 }

@@ -8,6 +8,7 @@ import {
   Alert, 
   TouchableHighlight, 
   Image, 
+  AsyncStorage,
 } from 'react-native';
 
 import { 
@@ -163,7 +164,34 @@ class App extends React.Component {
     super()
     this.state = {
       menuExpanded: false,
+      numberDone:0,
+      isLoading:true,
+      all_keys_are_there:["pantryList","groceryToPantry","pantrytoGrocery",
+      "groceryList","pantryCategoryList","recipeList","defaultGroceryList"],
     };
+  }
+  componentWillMount(){
+
+    AsyncStorage.getAllKeys().then(keys => {
+      if(this.state.all_keys_are_there.sort().join(',')=== keys.sort().join(',')){
+        console.log(keys);
+        this.setState({isLoading:false});
+      } else {
+        AsyncStorage.multiSet([
+          ['pantryList', JSON.stringify([])],
+          ['groceryToPantry', JSON.stringify(true)],
+          ['pantrytoGrocery', JSON.stringify(true)],
+          ['groceryList', JSON.stringify([])],
+          ['pantryCategoryList', JSON.stringify([{text: "All"},{text: "Fridge"},{text: "Pantry"}])],
+          ['recipeList', JSON.stringify([])],
+          ['defaultGroceryList', JSON.stringify([])]
+        ]).then(()=>{
+          this.setState({isLoading:false});
+        });
+      }
+
+    })
+
   }
   static navigationOptions = {
     title: 'Welcome',
@@ -177,8 +205,20 @@ class App extends React.Component {
 
   render() {
     const { navigate } = this.props.navigation;
-    const { menuExpanded } = this.state;
+    const { menuExpanded, isLoading } = this.state;
     const nav_to = app_name => navigate(app_name);
+
+    if(isLoading){
+      return <Text>"Loading..."</Text> 
+    }
+    var keys;
+    AsyncStorage.getAllKeys().then(keys => {
+      console.log(keys)
+      AsyncStorage.multiGet(keys).then( result => {
+        
+      });        
+    });
+      
 
     return (
       <SideMenu

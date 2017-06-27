@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button, Alert, TouchableHighlight, Image, ScrollView, FlatList,TextInput } from 'react-native';
 import UnitPriceItem from './UnitPriceItem'
-
+var convert = require('convert-units')
 const itemStyle={
   marginVertical: 10,
   height: 60, 
@@ -23,8 +23,8 @@ export default class unitPriceScreen extends React.Component {
   constructor(){
     super();
     this.state = {
-      item1:{name:"Item 1:",price:0.00,size:1,unit:1},
-      item2:{name:"Item 2:",price:1.00,size:1,unit:2},
+      item1:{name:"Item 1:",price:0.00,size:1,unit:"g"},
+      item2:{name:"Item 2:",price:1.00,size:1,unit:"g"},
       compared:false,
       resultText:'',
     };
@@ -32,12 +32,33 @@ export default class unitPriceScreen extends React.Component {
   static navigationOptions = {
     title: 'Unit Price Calculator',
   };
-  convert(){
-    if(this.state.item1.price<this.state.item2.price){
-      this.setState({resultText:"Item 1 is a better price"});
-    }else{
-      this.setState({resultText:"Item 2 is a better price"});
+  compare(item1, item2){
+    var val1 = item1.size;
+    var unit1 = item1.unit
+    var price1 = item1.price;
+    var val2 = item2.size;
+    var unit2 = item2.unit;
+    var price2 = item2.price;
+    var val1Convert;
+    try{
+     val1Convert = convert(val1).from(unit1).to(unit2);
+    }catch(err){
+      return "Units cannot be compaired"
     }
+
+    var unitPrice1 = price1/val1Convert;
+    var unitPrice2 = price2/val2;
+    if(unitPrice1<unitPrice2){
+      return "Item 1 has a better price"
+    }else if(unitPrice2<unitPrice1){
+      return "Item 2 has a better price"
+    }else{
+      return "They are the same price"
+    }
+  }
+  convert(){
+    var result = this.compare(this.state.item1, this.state.item2)
+      this.setState({resultText:"Item 1 is a better price"});
     this.setState({compared:true})
   }
 
@@ -79,6 +100,21 @@ export default class unitPriceScreen extends React.Component {
                     }}
                   />
                 </View>
+                <View style={{flexDirection:'row'}}>
+                  <Text>Unit:</Text>
+                  <TextInput 
+                    style={inputStyle}
+                    placeholder="g"
+                    value={this.state.item1.unit}
+                    onChangeText={text => { 
+                    var ite;
+                        ite=this.state.item1;
+                        ite.unit=text;
+                        this.setState({item1: ite});
+                       
+                    }}
+                  />
+                </View>
               </View>
               <View style={itemS}>
                 <Text>item.name</Text>
@@ -110,6 +146,21 @@ export default class unitPriceScreen extends React.Component {
                         ite.size=text;
                         this.setState({item2: ite});
                       
+                    }}
+                  />
+                </View>
+                <View style={{flexDirection:'row'}}>
+                  <Text>Unit:</Text>
+                  <TextInput 
+                    style={inputStyle}
+                    placeholder="g"
+                    value={this.state.item2.unit}
+                    onChangeText={text => { 
+                    var ite;
+                        ite=this.state.item2;
+                        ite.unit=text;
+                        this.setState({item2: ite});
+                       
                     }}
                   />
                 </View>

@@ -12,6 +12,7 @@ import {
   FlatList,
   ScrollView,
   Switch,
+  AsyncStorage,
 } from 'react-native';
 import { 
   List as REList,
@@ -119,26 +120,29 @@ const ItemStyle={
 export default class SettingsScreen extends React.Component {
   constructor(){
     super();
+    var list, pantry, grocery, gList;
+      AsyncStorage.getItem('groceryToPantry', (err, result) => {
+            pantry = JSON.parse(result);
+      
+          });
+      AsyncStorage.getItem('pantryCategoryList', (err, result) => {
+            list = JSON.parse(result);
+      
+          });
+      AsyncStorage.getItem('pantrytoGrocery', (err, result) => {
+            grocery = JSON.parse(result);
+      
+          });
+      AsyncStorage.getItem('defaultGroceryList', (err, result) => {
+            gList = JSON.parse(result);
+      
+          });
     this.state = {
       switchValue: true,
-      timeFrames:["This Week", "This Month", "All"],
-      week:[{text:"1"}, {text:"2"}, {text:"3"}],
-      month:[{text:"5"}, {text:"4"}],
-      allList:[{text:"1"}, {text:"2"}, {text:"3"},{text:"4"},{text:"5"},{text:"6"}],
-      listSource: [{text:"1"}, {text:"2"}, {text:"3"},{text:"4"},{text:"5"},{text:"6"}],
-      selectedIndex:2,
-      items: _.map([
-        'bread',
-        'tea',
-        'milk',
-        'beef',
-      ], text => ({ text, id: _.uniqueId() }) ),
-      items2: _.map([
-        'All',
-        'Fridge',
-        'Freezer',
-        'Pantry',
-      ], text => ({ text, id: _.uniqueId() }) ),
+      items:gList,
+      items2: list,
+      toGrocery:grocery,
+      toPantry:pantry,
 
     };
   }
@@ -146,25 +150,21 @@ export default class SettingsScreen extends React.Component {
     title: 'Settings',
   };  
 
-  toggleCalendar(value){
-    this.setState({switchValue: !this.state.switchValue });
+  togglePantry(value){
+    this.setState({toPantry: !this.state.toPantry });
+    AsyncStorage.mergeItem('groceryToPantry',  JSON.stringify(this.state.toPantry), () => {
+    
+    });
   }
-
-  
-
-  removeItem(item){
-    _.without(this.state.listSource, item)
+  toggleGrocery(value){
+    this.setState({toGrocery: !this.state.toGrocery });
+    AsyncStorage.mergeItem('pantrytoGrocery',  JSON.stringify(this.state.toGrocery), () => {
+    
+    });
   }
-
-  addItemToCart(item){
-    //Alert.alert("item added to cart",item.text);
-  }
-
-
-
 
     render() {
-      const { switchValue : showCalendar, timeFrames : buttons, selectedIndex : selectedIndex, items, items2 } = this.state; 
+      const { toGrocery, toPantry, timeFrames : buttons, selectedIndex : selectedIndex, items, items2 } = this.state; 
       return (
             <ScrollView>
             <Text>Groceries</Text>
@@ -172,53 +172,40 @@ export default class SettingsScreen extends React.Component {
             <Text style={{fontSize: 20}}>Add removed items to pantry </Text>
             <Switch 
               onValueChange={()=>{
-                this.toggleCalendar()
+                this.togglePantry()
               }} 
-              value={this.state.switchValue}
+              value={toPantry}
             />
             </View>
             <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
-            <Text style={{fontSize: 20}}>Use defalut grocery List </Text>
-            <Switch 
-              onValueChange={()=>{
-                this.toggleCalendar()
-              }} 
-              value={this.state.switchValue}
-            />
+            <Text style={{fontSize: 20}}>Defalut grocery List </Text>
             </View>
             <PresentationalSettingScreen 
-      onAddItem={(new_item)=>{
-        this.setState({
-          items: items.concat([{text: new_item, id: _.uniqueId()}]),
-        })
-      }}
-      onDismissItem={ ({id}) =>{
-        const { items } = this.state;
-        this.setState({
-          items: _.reject(items, { id }),
-        })
-      }}
-      items={items}
-      onClickItem={ ({id}) =>{
-        const { items } = this.state;
-        this.setState({
-          showRecipie: true
-        });
-        this.setState({
-          selectedIndex: id
-        });
-      }}
-    />
-
-
+              onAddItem={(new_item)=>{
+                this.setState({
+                  items: items.concat([{text: new_item, id: _.uniqueId()}]),
+                })
+                AsyncStorage.mergeItem('defaultGroceryList',  JSON.stringify(this.state.items), () => {    
+                });
+              }}
+              onDismissItem={ ({id}) =>{
+                const { items } = this.state;
+                this.setState({
+                  items: _.reject(items, { id }),
+                })
+                AsyncStorage.mergeItem('defaultGroceryList',  JSON.stringify(this.state.items), () => {    
+                });
+              }}
+              items={items}
+            />
             <Text>Pantry</Text>
             <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
             <Text style={{fontSize: 20}}>add removed items to grocery list </Text>
             <Switch 
               onValueChange={()=>{
-                this.toggleCalendar()
+                this.toggleGrocry();
               }} 
-              value={this.state.switchValue}
+              value={toGrocery}
             />
 
             </View>
@@ -227,19 +214,21 @@ export default class SettingsScreen extends React.Component {
         this.setState({
           items2: items2.concat([{text: new_item, id: _.uniqueId()}]),
         })
+        AsyncStorage.mergeItem('pantryCategoryList',  JSON.stringify(this.state.items2), () => {    
+      });
       }}
       onDismissItem={ ({id}) =>{
-        const { items } = this.state;
+        const { items2 } = this.state;
         this.setState({
-          items2: _.reject(items, { id }),
+          items2: _.reject(items2, { id }),
         })
+        AsyncStorage.mergeItem('pantryCategoryList',  JSON.stringify(this.state.items2), () => {   
+        });
       }}
       items={items2}
       
     />
-            
-
-            </ScrollView>
+    </ScrollView>
 
       );
     }
