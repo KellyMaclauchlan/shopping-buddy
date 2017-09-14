@@ -7,8 +7,7 @@ export default class MenuIcon extends React.Component {
       return (
             <TouchableHighlight onPress={this.props.onPress}>
               <View style={{alignItems:'center'}}>
-                <Image style={styles.button} source={this.props.image}/>
-                <Text>{this.props.text}</Text>
+                <Image style={{width: 110, height: 110}} source={this.props.image}/>
               </View>
             </TouchableHighlight>
       );

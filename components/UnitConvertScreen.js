@@ -3,21 +3,35 @@ import { StyleSheet, Text, View, Button, Alert, TouchableHighlight, Image, TextI
 var convert = require('convert-units')
 const itemStyle={
   marginVertical: 10,
-  height: 60, 
-  borderColor: '#bbb', 
+  height: 60,
+  borderColor: '#bbb',
   backgroundColor:'#fefefe',
   borderWidth: 1,
   justifyContent:'space-between',
 };
 const inputStyle={
-  borderColor: '#bbb', 
   backgroundColor:'#fefefe',
   borderWidth: 1,
+  borderRadius: 5,
+  borderColor: '#999',
+  borderWidth: 1,
+  display: 'block',
+  fontSize: 18,
+  height:25,
   width:50,
-  justifyContent:'space-between',
+  marginHorizontal: 5,
 };
-const itemS={flexDirection:'column',marginVertical: 10, backgroundColor:'#c5cbd3',width:130, textAlign:'center',borderRadius:10,borderWidth: 1,overflow: 'hidden'};
-
+const textStyle={
+  fontSize: 18,
+};
+const itemS={
+  flexDirection:'column',
+  marginVertical: 10,
+   backgroundColor:"#7cbab2",
+   width:130,
+   borderRadius:10,
+   borderWidth: 1,
+   overflow: 'hidden'};
 export default class UnitConvertScreen extends React.Component {
   constructor(){
     super();
@@ -31,47 +45,54 @@ export default class UnitConvertScreen extends React.Component {
   }
   unitConvert(amount, unit1, unit2){
     var result ="";
+    console.log(amount);
+    console.log(unit1);
+    console.log(unit2);
     try{
-      result = convert(val1).from(unit1).to(unit2) +""+unit2;
+      console.log(convert(amount).from(unit1).to(unit2))
+      result = convert(amount).from(unit1).to(unit2) +""+unit2;
     }catch(err){
+      console.log(err)
       result = " an Invalid Conversion"
     }
     return result;
   }
   static navigationOptions = {
     title: 'Unit Price Calculator',
+    headerTintColor: window.black,
+    headerStyle:{ backgroundColor: window.lightGrey},
   };
   calculate(){
-    var result = this.unitConvert(this.state.value, this.state.unit1, this.state.unit2);
+    var result = this.unitConvert(this.state.value, this.state.unit1.toLowerCase(), this.state.unit2.toLowerCase());
     this.setState({resultText:"It is:"+result});
     this.setState({calculate:true})
   };
 
     render() {
       return (
-            <View>
+            <View style={{flex: 1, backgroundColor: window.darkGrey}}>
             <View style={{flexDirection:'row', marginHorizontal:20,justifyContent:'space-between',}}>
             <View style={itemS}>
-                <View style={{flexDirection:'row'}}>
-                  <Text>Unit from:</Text>
-                  <TextInput 
+                <View style={{flexDirection:'column'}}>
+                  <Text style={textStyle}>Unit from:</Text>
+                  <TextInput
                     style={inputStyle}
                     placeholder="g"
                     value={this.state.unit1}
-                    onChangeText={text => { 
+                    onChangeText={text => {
                         this.setState({unit1: text});
-                           
+
                     }}
                   />
                 </View>
 
-                <View style={{flexDirection:'row'}}>
-                  <Text>Size:</Text>
-                  <TextInput 
+                <View style={{flexDirection:'column'}}>
+                  <Text style={textStyle}>Size:</Text>
+                  <TextInput
                     style={inputStyle}
-                    placeholder="1"
+                    placeholder="1 "
                     value={this.state.value}
-                    onChangeText={text => { 
+                    onChangeText={text => {
                         this.setState({value: text});
                     }}
                   />
@@ -79,15 +100,14 @@ export default class UnitConvertScreen extends React.Component {
               </View>
 
               <View style={itemS}>
-                <Text>item.name</Text>
-                <View style={{flexDirection:'row'}}>
-                  <Text>Convert To:</Text>
-                  <TextInput 
+                <View style={{flexDirection:'column'}}>
+                  <Text style={textStyle}>Convert To:</Text>
+                  <TextInput
                     style={inputStyle}
                     placeholder="kg"
                     value={this.state.unit2}
-                    onChangeText={text => { 
-                        this.setState({unit2: text});     
+                    onChangeText={text => {
+                        this.setState({unit2: text});
                     }}
                   />
                 </View>
@@ -97,16 +117,13 @@ export default class UnitConvertScreen extends React.Component {
 
             <TouchableHighlight onPress={()=>this.calculate()} >
               <View style={{alignItems:'center'}}>
-                <Text>GO</Text>
+              <Image style={styles.button} source={require("./../icons/converticon.png")}/>
               </View>
             </TouchableHighlight>
 
             {this.state.calculate ?
-              <View style={itemS}>
-                <View style={{flexDirection:'row'}}>
-                  <Text>{this.state.resultText}</Text>
-                </View>
-              
+              <View style={{alignItems:'center'}}>
+              <Text style={{fontSize: 25,paddingVertical:10}}>{this.state.resultText}</Text>
               </View>
               : null
             }

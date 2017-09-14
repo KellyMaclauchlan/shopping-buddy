@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { 
-  StyleSheet, 
+import {
+  StyleSheet,
   Text,
-  View,  
-  Button, 
-  Alert, 
-  TouchableHighlight, 
+  View,
+  Button,
+  Alert,
+  TouchableHighlight,
   Image,
   TextInput,
   FlatList,
@@ -14,7 +14,7 @@ import {
   Switch,
   AsyncStorage,
 } from 'react-native';
-import { 
+import {
   List as REList,
   ListItem as REListItem,
   Button as REButton,
@@ -23,8 +23,17 @@ import {
 } from 'react-native-elements';
 
 const _ = require('lodash');
+const colours = {blue :"#7cbab2",
+    darkGrey : '#b0b7b6',
+    black : '#030312',
+    lightGrey : '#c5cbd3',
+    purple : '#310a31',
+    warmPurple : '#432043'}
+
+
+import { AddRemoveList } from './AddRemoveList';
 const inputStyle={
-  borderColor: '#bbb', 
+  borderColor: '#bbb',
   backgroundColor:'#fefefe',
   borderWidth: 1,
   width:50,
@@ -32,201 +41,187 @@ const inputStyle={
 };
 
 
-class PresentationalSettingScreen extends React.Component {
-constructor(){
-    super();
-    this.state = {
-      add_item_text : null,
-    }
-  }
-  render(){
-    const { 
-      items,
-      onDismissItem,
-      onClickItem,
-    } = this.props;
-    const {
-      add_item_text,
-    } = this.state;
-    return (  
-    <View 
-      style={{
-        paddingHorizontal: 25,
-      }}
-    >
-      <REText h1> Recipies </REText>
-      <TextInput 
-        placeholder="Add an item"
-        placeholderTextColor="#999"
-        value={add_item_text}
-        style={
-          ItemStyle
-        }
-        onChangeText={text => this.setState({add_item_text: text })}
-        onKeyPress={(event)=> {
-          if(event.nativeEvent.key == 'Enter' && !_.isEmpty(add_item_text) ){
-            this.addItem(add_item_text);
-          }
-        }}
-        /> 
-        <FlatList
-          data={items}
-          renderItem={({item}) => (
-            <TodoRect key={item.text}>
-              <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                <Text
-                  onPress={()=>onClickItem(item)}
-                  children={item.text}
-                />
-                <View 
-                  style={{color: 'red'}}
-                  
-                >
-                  <Text
-                    onPress={()=>onDismissItem(item)}
-                    children={"X"}
-                  />
-                </View>
-              </View>
-            </TodoRect> 
-          )}
-        />
-    </View>);
-  }
-  addItem(item_text){
-    this.props.onAddItem(item_text);
-    this.setState({
-      add_item_text: null,
-    })
-  }
-} 
-
-const TodoRect = ({children}) => (
-  <View style={ItemStyle}>
-    {children}
-  </View>
-);
-
-const ItemStyle={
-  marginVertical: 0,
-  height: 60, 
-  borderColor: '#bbb', 
-  backgroundColor:'#fefefe',
-  borderWidth: 1,
-  paddingHorizontal: 20,
-  paddingVertical: 10,
-};
-
 export default class SettingsScreen extends React.Component {
   constructor(){
     super();
-    var list, pantry, grocery, gList;
-      AsyncStorage.getItem('groceryToPantry', (err, result) => {
-            pantry = JSON.parse(result);
-      
-          });
-      AsyncStorage.getItem('pantryCategoryList', (err, result) => {
-            list = JSON.parse(result);
-      
-          });
-      AsyncStorage.getItem('pantrytoGrocery', (err, result) => {
-            grocery = JSON.parse(result);
-      
-          });
-      AsyncStorage.getItem('defaultGroceryList', (err, result) => {
-            gList = JSON.parse(result);
-      
-          });
+
     this.state = {
       switchValue: true,
-      items:gList,
-      items2: list,
-      toGrocery:grocery,
-      toPantry:pantry,
-
+      items:[],
+      items2: [],
+      toGrocery:false,
+      toPantry:false,
+      isLoading:true,
+      isSaving:false,
     };
   }
   static navigationOptions = {
     title: 'Settings',
-  };  
+    headerTintColor: window.black,
+    headerStyle:{ backgroundColor: window.lightGrey},
+  };
+
+  componentWillMount(){
+    AsyncStorage.multiGet(['groceryToPantry', 'pantryToGrocery','defaultGroceryList','pantryCategoryList']).then(results => {
+        const [[k1,grocery_json], [k2,pantry_json], [k3,groceryList_json], [k4, pantryCat_json]] = results;
+        const pantry = JSON.parse(grocery_json);
+        const grocery = JSON.parse(pantry_json);
+        const groceryList = JSON.parse(groceryList_json);
+        const pantryCat = JSON.parse(pantryCat_json);
+
+        this.setState({
+          items2:pantryCat,
+          items: groceryList,
+          toGrocery:grocery,
+          toPantry:pantry,
+          isLoading: false,
+
+        });
+
+    });
+  }
 
   togglePantry(value){
-    this.setState({toPantry: !this.state.toPantry });
-    AsyncStorage.mergeItem('groceryToPantry',  JSON.stringify(this.state.toPantry), () => {
-    
-    });
+    var bool = !this.state.toPantry;
+    this.setState({toPantry: bool });
+    this.setState({isSaving:true});
+    AsyncStorage.multiSet([['groceryToPantry', JSON.stringify(bool)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });});
   }
   toggleGrocery(value){
-    this.setState({toGrocery: !this.state.toGrocery });
-    AsyncStorage.mergeItem('pantrytoGrocery',  JSON.stringify(this.state.toGrocery), () => {
-    
-    });
+    var bool = !this.state.toGrocery
+    this.setState({toGrocery: bool });
+    this.setState({isSaving:true});
+    AsyncStorage.multiSet([['pantryToGrocery', JSON.stringify(bool)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
+  }
+  deleteGrocery(){
+    this.setState({isSaving:true});
+    AsyncStorage.multiSet([['groceryList', JSON.stringify([])]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
+  }
+  deletePantry(){
+    this.setState({isSaving:true});
+    AsyncStorage.multiSet([['pantryList', JSON.stringify([])]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
   }
 
+
     render() {
-      const { toGrocery, toPantry, timeFrames : buttons, selectedIndex : selectedIndex, items, items2 } = this.state; 
+      const { toGrocery, toPantry, timeFrames : buttons, selectedIndex : selectedIndex, items, items2 } = this.state;
+      if(this.state.isLoading){
+        return<View style={{alignItems:"center"}}><Image style={{width:320, height:520}}source={require('./../icons/load.gif')}/></View>;
+      }
+      if(this.state.isSaving){
+        return<View style={{alignItems:"center"}}><Image source={require('./../icons/save.gif')}/></View>;
+      }
+
       return (
-            <ScrollView>
-            <Text>Groceries</Text>
-            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
-            <Text style={{fontSize: 20}}>Add removed items to pantry </Text>
-            <Switch 
+            <ScrollView style={{backgroundColor: window.darkGrey}}>
+            <Text style={{fontSize: 20}}>Groceries:</Text>
+            <View style={{flexDirection: 'row',justifyContent: 'space-between', alignItems: 'center'}}>
+            <Text style={{fontSize: 15 }}>Add removed items to pantry: </Text>
+            <Switch
               onValueChange={()=>{
                 this.togglePantry()
-              }} 
+              }}
               value={toPantry}
+              onTintColor={window.purple}
             />
             </View>
-            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
-            <Text style={{fontSize: 20}}>Defalut grocery List </Text>
+            <View style={{flexDirection: 'row',justifyContent:'center',alignItems:'center'}}>
+            <Text style={{fontSize: 17}}>Defalut grocery List </Text>
             </View>
-            <PresentationalSettingScreen 
+            <AddRemoveList
               onAddItem={(new_item)=>{
+                ites = items.concat([{text: new_item, id: window.kelly_uID()}])
                 this.setState({
-                  items: items.concat([{text: new_item, id: _.uniqueId()}]),
+                  items: ites,
                 })
-                AsyncStorage.mergeItem('defaultGroceryList',  JSON.stringify(this.state.items), () => {    
-                });
+                this.setState({isSaving:true});
+                AsyncStorage.multiSet([['defaultGroceryList', JSON.stringify(ites)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
               }}
               onDismissItem={ ({id}) =>{
                 const { items } = this.state;
+                ites = _.reject(items, { id })
                 this.setState({
-                  items: _.reject(items, { id }),
+                  items: ites,
                 })
-                AsyncStorage.mergeItem('defaultGroceryList',  JSON.stringify(this.state.items), () => {    
-                });
+                this.setState({isSaving:true});
+    AsyncStorage.multiSet([['defaultGroceryList', JSON.stringify(ites)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });});
               }}
+              onClickItem={ ({id}) =>{}}
               items={items}
             />
-            <Text>Pantry</Text>
-            <View style={{flexDirection: 'row',justifyContent:'flex-end'}}>
-            <Text style={{fontSize: 20}}>add removed items to grocery list </Text>
-            <Switch 
+            <Text style={{fontSize: 20}}>Pantry:</Text>
+            <View style={{flexDirection: 'row',justifyContent:'space-between',alignItems:'center'}}>
+            <Text style={{fontSize: 15}}> Add removed items to grocery list </Text>
+            <Switch
               onValueChange={()=>{
-                this.toggleGrocry();
-              }} 
+                this.toggleGrocery()
+              }}
               value={toGrocery}
+              onTintColor={window.purple}
             />
 
             </View>
-<PresentationalSettingScreen 
+<AddRemoveList
       onAddItem={(new_item)=>{
+        ites=this.state.items2.concat([{text: new_item, id: window.kelly_uID()}])
         this.setState({
-          items2: items2.concat([{text: new_item, id: _.uniqueId()}]),
+          items2: ites,
         })
-        AsyncStorage.mergeItem('pantryCategoryList',  JSON.stringify(this.state.items2), () => {    
-      });
+        this.setState({isSaving:true});
+    AsyncStorage.multiSet([['pantryCategoryList', JSON.stringify(ites)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });});
       }}
       onDismissItem={ ({id}) =>{
         const { items2 } = this.state;
+        ites = _.reject(items2, { id })
         this.setState({
-          items2: _.reject(items2, { id }),
+          items2: ites,
         })
-        AsyncStorage.mergeItem('pantryCategoryList',  JSON.stringify(this.state.items2), () => {   
-        });
+        this.setState({isSaving:true});
+    AsyncStorage.multiSet([['pantryCategoryList', JSON.stringify(ites)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });});
       }}
+      onClickItem={ ({id}) =>{}}
       items={items2}
-      
+
+    />
+    <REButton
+      onPress= {()=> this.deleteGrocery()}
+      buttonStyle={{backgroundColor: window.warmPurple, borderRadius: 10,overflow: 'hidden'}}
+      textStyle={{textAlign: 'center'}}
+      title={`Delete grocery list`}
+    />
+    <REButton
+      onPress= {()=> this.deletePantry()}
+      buttonStyle={{backgroundColor: window.warmPurple, borderRadius: 10,overflow: 'hidden'}}
+      textStyle={{textAlign: 'center'}}
+      title={`Delete pantry list`}
     />
     </ScrollView>
 

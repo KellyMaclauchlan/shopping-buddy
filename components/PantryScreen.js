@@ -1,18 +1,18 @@
 import React from 'react';
 
-import { 
-  StyleSheet, 
+import {
+  StyleSheet,
   Text,
-  View,  
-  Button, 
-  Alert, 
-  TouchableHighlight, 
+  View,
+  Button,
+  Alert,
+  TouchableHighlight,
   Image,
   TextInput,
   FlatList,
   AsyncStorage,
 } from 'react-native';
-import { 
+import {
   List as REList,
   ListItem as REListItem,
   Button as REButton,
@@ -20,93 +20,20 @@ import {
   Icon,
 } from 'react-native-elements';
 const _ = require('lodash');
-
-
-class PresentationalPantryScreen extends React.Component {
-constructor(){
-    super();
-    this.state = {
-      add_item_text : null,
-    }
-  }
-  render(){
-    const { 
-      items,
-      onDismissItem,
-    } = this.props;
-    const {
-      add_item_text,
-    } = this.state;
-    return (  
-    <View 
-      style={{
-        paddingHorizontal: 25,
-      }}
-    >
-      <REText h1> Pantry List </REText>
-      <TextInput 
-        placeholder="Add an item"
-        placeholderTextColor="#999"
-        value={add_item_text}
-        style={
-          ItemStyle
-        }
-        onChangeText={text => this.setState({add_item_text: text })}
-        onKeyPress={(event)=> {
-          if(event.nativeEvent.key == 'Enter' && !_.isEmpty(add_item_text) ){
-            this.addItem(add_item_text);
-          }
-        }}
-        /> 
-        <FlatList
-          data={items}
-          renderItem={({item}) => (
-            <TodoRect key={item.text}>
-              <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                <Text>{item.text}</Text>
-                <View 
-                  style={{color: 'red'}}
-                  
-                >
-                  <Text
-                    onPress={()=>onDismissItem(item)}
-                    children={"X"}
-                  />
-                </View>
-              </View>
-            </TodoRect> 
-          )}
-        />
-    </View>);
-  }
-  addItem(item_text){
-    this.props.onAddItem(item_text);
-    this.setState({
-      add_item_text: null,
-    })
-  }
-} 
-
-const TodoRect = ({children}) => (
-  <View style={ItemStyle}>
-    {children}
-  </View>
-);
-
-const ItemStyle={
-  marginVertical: 0,
-  height: 60, 
-  borderColor: '#bbb', 
-  backgroundColor:'#fefefe',
-  borderWidth: 1,
-  paddingHorizontal: 20,
-  paddingVertical: 10,
-};
-
+import { AddRemoveList } from './AddRemoveList';
+import { ItemScreen } from './ItemScreen';
+const colours = {blue :"#7cbab2",
+    darkGrey : '#b0b7b6',
+    black : '#030312',
+    lightGrey : '#c5cbd3',
+    purple : '#310a31',
+    warmPurple : '#432043'}
 
 export default class PantryScreen extends React.Component {
   static navigationOptions = {
     title: 'In your pantry',
+    headerTintColor: window.black,
+    headerStyle:{ backgroundColor: window.lightGrey},
   };
   constructor(props){
     super(props)
@@ -114,126 +41,231 @@ export default class PantryScreen extends React.Component {
     this.state = {
       categories: [],
       items: [],
-      inCategories: true, 
+      inCategories: false,
       useList: [],
       currentCategory: null,
       toGrocery:false,
       groceryList:[],
       isSaving:false,
       isLoading:true,
+      showItem:false,
+      selectedItem:null,
+      selectedIndex: null,
     };
   }
 
   componentWillMount(){
-    var list
     AsyncStorage.multiGet(['groceryList', 'pantryToGrocery','pantryList','pantryCategoryList']).then(results => {
         const [[k1,grocery_json], [k2,pantry_json], [k3,pantryList_json], [k4, pantryCat_json]] = results;
         const list = JSON.parse(grocery_json);
         const pantry = JSON.parse(pantry_json);
         const pantryList = JSON.parse(pantryList_json);
         const pantryCat = JSON.parse(pantryCat_json);
-
+        pantryList.map(item => console.log(item.text))
         this.setState({
           toGrocery: pantry,
           items: pantryList,
           isLoading: false,
           groceryList: list,
           categories:pantryCat,
+          useList: pantryCat
         });
 
     });
   }
 
   goToCategory(category){
-    var cat = category.text==="All"? null: category.text;
+    if(category.text==="All"){
+      this.setState({
+          useList: this.state.items,
+        })
+    }
+
     var list = this.state.items.map(item => item.pantryLocation===category.text);
     currentCategory=category.text;
     this.setState({
           useList: list,
         })
   }
+  onSave(item){
+    var ites= this.state.items;
+    ites[this.state.selectedIndex]=item;
+    this.setState({
+      isSaving: true,
+    })
+    AsyncStorage.multiSet([
+          ['pantryList', JSON.stringify(ites)
+        ]
+      ]).then(()=>{
+      this.setState({
+        isSaving: false,
+      });})
+  }
 
   render() {
-    const { items, inCategories, useList } = this.state;
-    { inCategories ?  
+    const { items, inCategories, useList, showItem } = this.state;
+    if(this.state.isLoading){
+        return<View style={{alignItems:"center"}}><Image style={{width:320, height:520}}source={require('./../icons/load.gif')}/></View>;
+      }
+      if(this.state.isSaving){
+        return<View style={{alignItems:"center"}}><Image source={require('./../icons/save.gif')}/></View>;
+      }
+      if(showItem){
+        console.log("showing item")
+        return <View style={{flex: 1, backgroundColor: window.darkGrey}}>
+                <Button
+                title = "Back"
+                style={{justifyContent: 'flex-end', }}
+                onPress= {()=> this.setState({showItem:false,})}
+                /><ItemScreen onSave={(item)=>this.onSave(item)} item={this.state.selectedItem}/></View>;
+      }
+    return <View style={{flex: 1, backgroundColor: window.darkGrey}}>
+    { inCategories ?
               <Button
               title = "Back"
+              style={{justifyContent: 'flex-end', width: 50,}}
               onPress= {()=> this.setState({
-                useList: categories,
+                useList: this.state.categories,
                 inCategories:false,
                 })}
               /> : null
             }
-    return <PresentationalPantryScreen 
+            <AddRemoveList
       onAddItem={(new_item)=>{
+        const { currentCategory } = this.state;
+        console.log(this.state);
         this.setState({isSaving:true});
         if(inCategories){
-          var cat = currentCategory.text==="All"? null: currentCategory.text;
-          var item={text:new_item,expiryDate:null,defaultItem:false, pantryLocation:cat};
-          var ites=this.state.items;
-        this.setState({
-          items: ites.concat([item]),
-        })
-        AsyncStoragemultiSet([
-      ['pantryList', JSON.stringify(this.state.items)]
-    ]).then(()=>{
-      this.setState({
-        isSaving: false,
-      });
-    });
-      }else{
-        var ites=this.state.categories;
-        this.setState({
-          categories: ites.concat([{text: new_item,}]),
-        })
-        AsyncStoragemultiSet([
+          var cat = currentCategory==="All"? null: currentCategory;
+          var item={
+            text:new_item,
+            expiryDate:null,
+            defaultItem:false,
+            pantryLocation:cat,
+            quantity:1,
+            notes:"",
+            id: window.kelly_uID(),
+          };
+          var ites=this.state.items.concat([item]);
+          var use=this.state.useList.concat([item]);
+          this.setState({
+            items: ites,
+            useList: use,
+            isSaving: true,
+          },()=>{
+            console.log(ites);
+            AsyncStorage.multiSet([
+              ['pantryList', JSON.stringify(ites)]
+            ]).then(()=>{
+              console.log("done")
+              this.setState({
+
+                isSaving: false,
+              });
+            });
+          });
+        } else {
+          var ites=this.state.categories;
+          this.setState({
+            categories: ites.concat([{text: new_item, id : window.kelly_uID(), }]),
+          },()=>{
+            AsyncStorage.multiSet([
               ['pantryCategoryList', JSON.stringify(this.state.categories)]
             ]).then(()=>{
               this.setState({
                 isSaving: false,
               });
             });
-      }
+          });
+        }
       }}
       onDismissItem={ ({id}) =>{
         if(inCategories){
         this.setState({isSaving:true});
-        const { items } = this.state;
+
+        const { items, useList } = this.state;
+        console.log(id)
+        var item= _.find(items,{id})
+        console.log(item)
+        var ites= _.reject(items, { id })
         this.setState({
-          items: _.reject(items, { id }),
+          items: ites,
+          useList:_.reject(useList,{id})
         })
         let saveList=[
-            ['pantryList', JSON.stringify(this.state.items)]
+            ['pantryList', JSON.stringify(ites)]
           ];
-        if(this.state.toPantry){
+        if(this.state.toGrocery){
+          var gList=this.state.groceryList.concat([item]);
           this.setState({
-          groceryList: this.state.groceryList.concat([item]),
+          groceryList: gList,
           })
          saveList=[
-            ['groceryList', JSON.stringify(this.state.groceryList)],
-            ['pantryList', JSON.stringify(this.state.items)]
+            ['groceryList', JSON.stringify(gList)],
+            ['pantryList', JSON.stringify(ites)]
           ];
 
         }
-         AsyncStoragemultiSet(saveList).then(()=>{
+         AsyncStorage.multiSet(saveList).then(()=>{
+            this.setState({
+              isSaving: false,
+            });
+          });
+        }else{
+          const { categories, useList } = this.state;
+          var cats = _.reject(categories, { id })
+          this.setState({
+            categories: cats,
+            useList:_.reject(useList,{id})
+          });
+          AsyncStorage.multiSet([
+            ['pantryCategoryList', JSON.stringify(cats)]
+          ]).then(()=>{
             this.setState({
               isSaving: false,
             });
           });
         }
-        
+      }}
+      onClickItem={ category =>{
+        if(inCategories){
+          const { items } = this.state;
+          this.setState({
+            selectedItem:category,
+            selectedIndex: items.indexOf(category),
+            showItem: true
+          })
+        }else{
+        if(category.text==="All"){
+          this.setState({
+              useList: this.state.items,
+              currentCategory: null,
+              inCategories:true,
+            })
+
+        } else {
+          var list = this.state.items.filter(item => item.pantryLocation===category.text);
+          currentCategory=category.text;
+          this.setState({
+            useList: list,
+            currentCategory: category.text,
+            inCategories:true,
+          })
+        }
+      }
       }}
       items={useList}
     />
+    </View>
   }
 }
- 
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
   },
 });

@@ -1,194 +1,156 @@
 import React from 'react';
 
-import { 
-  StyleSheet, 
+import {
+  StyleSheet,
   Text,
-  View,  
-  Button, 
-  Alert, 
-  TouchableHighlight, 
+  View,
+  Button,
+  Alert,
+  TouchableHighlight,
   Image,
   TextInput,
   FlatList,
   AsyncStorage,
+  ScrollView,
 } from 'react-native';
-import { 
+import {
   List as REList,
   ListItem as REListItem,
   Button as REButton,
   Text as REText,
   Icon,
 } from 'react-native-elements';
-
+import { AddRemoveList } from './AddRemoveList';
 const _ = require('lodash');
+
+const colours = {blue :"#7cbab2",
+    darkGrey : '#b0b7b6',
+    black : '#030312',
+    lightGrey : '#c5cbd3',
+    purple : '#310a31',
+    warmPurple : '#432043'}
+
+
 const inputStyle={
-  borderColor: '#bbb', 
   backgroundColor:'#fefefe',
   borderWidth: 1,
-  width:50,
-  justifyContent:'space-between',
+  borderRadius: 5,
+  borderColor: '#999',
+  borderWidth: 1,
+  display: 'block',
+  fontSize: 18,
+  height:35,
 };
 
 
-class PresentationalRecepieScreen extends React.Component {
-constructor(){
-    super();
-    this.state = {
-      add_item_text : null,
-    }
-  }
-  render(){
-    const { 
-      items,
-      onDismissItem,
-      onClickItem,
-    } = this.props;
-    const {
-      add_item_text,
-    } = this.state;
-    return (  
-    <View 
-      style={{
-        paddingHorizontal: 25,
-      }}
-    >
-      <REText h1> Recipies </REText>
-      <TextInput 
-        placeholder="Add an item"
-        placeholderTextColor="#999"
-        value={add_item_text}
-        style={
-          ItemStyle
-        }
-        onChangeText={text => this.setState({add_item_text: text })}
-        onKeyPress={(event)=> {
-          if(event.nativeEvent.key == 'Enter' && !_.isEmpty(add_item_text) ){
-            this.addItem(add_item_text);
-          }
-        }}
-        /> 
-        <FlatList
-          data={items}
-          renderItem={({item}) => (
-            <TodoRect key={item.text}>
-              <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                <Text
-                  onPress={()=>onClickItem(item)}
-                  children={item.text}
-                />
-                <View 
-                  style={{color: 'red'}}
-                  
-                >
-                  <Text
-                    onPress={()=>onDismissItem(item)}
-                    children={"X"}
-                  />
-                </View>
-              </View>
-            </TodoRect> 
-          )}
-        />
-    </View>);
-  }
-  addItem(item_text){
-    this.props.onAddItem(item_text);
-    this.setState({
-      add_item_text: null,
-    })
-  }
-} 
-
-const TodoRect = ({children}) => (
-  <View style={ItemStyle}>
-    {children}
-  </View>
-);
 
 const ItemStyle={
-  marginVertical: 0,
-  height: 60, 
-  borderColor: '#bbb', 
-  backgroundColor:'#fefefe',
-  borderWidth: 1,
-  paddingHorizontal: 20,
-  paddingVertical: 10,
+  marginVertical: 20,
+  display: 'flex',
+  flexDirection: 'column',
 };
 
+const input_header_style={
+  fontWeight: 'bold',
+  fontSize: 20,
+}
 
 export default class RecepieScreen extends React.Component {
   static navigationOptions = {
     title: 'Recipe',
+    headerTintColor: window.black,
+    headerStyle:{ backgroundColor: window.lightGrey},
   };
   constructor(props){
     super(props)
-    var list; 
-    AsyncStorage.getItem('recipeList', (err, result) => {
-            list = JSON.parse(result);
-      
-          });
+
     this.state = {
-      items: list,
+      items: [],
       showRecipie:false,
       selectedIndex:0,
-      selectedItem:{text:"tuna",time:"40 min", ovenSetting:"400", steps:"cut the chicken, put it in a bowl",ingrediants:"eggs, chicken, beef"},
+      isSaving:false,
+      isLoading: true,
+      selectedItem:null
     };
+  }
+
+    componentWillMount(){
+    AsyncStorage.multiGet(['recipeList']).then(results => {
+        const [[k1,recipe_json]] = results;
+        const list = JSON.parse(recipe_json);
+
+        this.setState({
+          items: list,
+          isLoading: false,
+        });
+
+    });
   }
 
   render() {
     const { items, showRecipie } = this.state;
-    return <View>
-    { !showRecipie ? 
-    <PresentationalRecepieScreen 
+    if(this.state.isSaving || this.state.isLoading){
+        return <Text> Loading... </Text>;
+      }
+    return <View style={{backgroundColor: window.darkGrey}}>
+    { !showRecipie ?
+    <AddRemoveList
       onAddItem={(new_item)=>{
-        var item ={text:new_item,time:"", ovenSetting:"", steps:"",ingrediants:""};
+        //this.setState({isSaving:true});
+        var item ={text:new_item,time:"", ovenSetting:"", steps:"",ingrediants:"", id: window.kelly_uID(),};
+
+        ites=this.state.items.concat([item])
         this.setState({
-          items: items.concat([item]),
-        })
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-    
-        });
-       this.setState({
-          selectedItem:item,
+          items: ites,
           selectedIndex: items.indexOf(item),
-          showRecipie: true
+          showRecipie: true,
+          selectedItem:item,
         })
+        AsyncStorage.multiSet([['recipeList', JSON.stringify(ites)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+        });
       }}
+
       onDismissItem={ ({id}) =>{
         const { items } = this.state;
+        this.setState({isSaving:true});
         this.setState({
           items: _.reject(items, { id }),
         })
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-    
-        });
+        AsyncStorage.multiSet([['recipeList', JSON.stringify(this.state.items)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
       }}
       items={items}
       onClickItem={ ({id}) =>{
         const { items } = this.state;
         this.setState({
-          selectedItem:item,
-          selectedIndex: items.indexOf(item),
+          selectedItem:id,
+          selectedIndex: items.indexOf(id),
           showRecipie: true
         })
       }}
     />
   :
-  <View>
+  <ScrollView>
   <Button
    title = "Back"
     onPress= {()=> this.setState({
                 showRecipie:false,
                 })}
               />
-  
-  <Text>{this.state.selectedIndex}</Text>
-  <View style={{flexDirection:'row'}}>
-  <Text> Name </Text>
-    <TextInput 
+
+  <View style={ItemStyle}>
+    <Text style={input_header_style}> Name </Text>
+    <TextInput
       style={inputStyle}
       value={this.state.selectedItem.text}
-      onChangeText={text => { 
+      onChangeText={text => {
+        this.setState({isSaving:true});
       var ite
           ite=this.state.selectedItem;
           ite.text=text;
@@ -196,18 +158,23 @@ export default class RecepieScreen extends React.Component {
           var itel;
           itel = this.state.items;
           itel[this.state.selectedIndex]=ite;
-          this.setState({items:itle});
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-        });
+          this.setState({items:itel});
+        AsyncStorage.multiSet([['recipeList', JSON.stringify(this.state.items)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
       }}
-    />
+      />
     </View>
-    <View style={{flexDirection:'row'}}>
-  <Text> Cook Time </Text>
-    <TextInput 
+
+  <View style={ItemStyle}>
+    <Text style={input_header_style}> Cook Time </Text>
+    <TextInput
       style={inputStyle}
       value={this.state.selectedItem.cook}
-      onChangeText={text => { 
+      onChangeText={text => {
+        this.setState({isSaving:true});
       var ite
           ite=this.state.selectedItem;
           ite.cook=text;
@@ -215,82 +182,97 @@ export default class RecepieScreen extends React.Component {
           var itel;
           itel = this.state.items;
           itel[this.state.selectedIndex]=ite;
-          this.setState({items:itle});
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-        });
+          this.setState({items:itel});
+        AsyncStorage.multiSet([['recipeList', JSON.stringify(this.state.items)]]).then(()=>{
+          this.setState({
+            isSaving: false,
+          });
+          });
       }}
     />
     </View>
-    <View style={{flexDirection:'row'}}>
-    <Text> Oven Setting </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.ovenSetting}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.oven=text;
-          this.setState({selectedItem: ite});
-          var itel;
-          itel = this.state.items;
-          itel[this.state.selectedIndex]=ite;
-          this.setState({items:itle});
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-        });
-      }}
-    />
+    <View style={ItemStyle}>
+      <Text style={input_header_style}> Oven Setting </Text>
+      <TextInput
+        style={inputStyle}
+        value={this.state.selectedItem.ovenSetting}
+        onChangeText={text => {
+          this.setState({isSaving:true});
+        var ite
+            ite=this.state.selectedItem;
+            ite.oven=text;
+            this.setState({selectedItem: ite});
+            var itel;
+            itel = this.state.items;
+            itel[this.state.selectedIndex]=ite;
+            this.setState({items:itel});
+          AsyncStorage.multiSet([['recipeList', JSON.stringify(this.state.items)]]).then(()=>{
+            this.setState({
+              isSaving: false,
+            });
+            });
+        }}
+      />
     </View>
-    <View style={{flexDirection:'row'}}>
-    <Text> Steps </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.steps}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.steps=text;
-          this.setState({selectedItem: ite});
-          var itel;
-          itel = this.state.items;
-          itel[this.state.selectedIndex]=ite;
-          this.setState({items:itle});
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-        });
-      }}
-    />
-    </View>
-
-    <View style={{flexDirection:'row'}}>
-    <Text> Ingrediants </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.ingrediants}
-      onChangeText={text => { 
-      var ite;
-          ite=this.state.selectedItem;
-          ite.ingrediants=text;
-          this.setState({selectedItem: ite});
-          var itel;
-          itel = this.state.items;
-          itel[this.state.selectedIndex]=ite;
-          this.setState({items:itle});
-        AsyncStorage.mergeItem('recipeList',  JSON.stringify(this.state.items), () => {
-        });
-      }}
-    />
+    <View style={ItemStyle}>
+      <Text style={input_header_style}> Steps </Text>
+      <TextInput
+        style={inputStyle}
+        value={this.state.selectedItem.steps}
+        onChangeText={text => {
+          this.setState({isSaving:true});
+        var ite
+            ite=this.state.selectedItem;
+            ite.steps=text;
+            this.setState({selectedItem: ite});
+            var itel;
+            itel = this.state.items;
+            itel[this.state.selectedIndex]=ite;
+            this.setState({items:itel});
+          AsyncStorage.multiSet([['recipeList', JSON.stringify(this.state.items)]]).then(()=>{
+            this.setState({
+              isSaving: false,
+            });
+            });
+        }}
+        multiline={true}
+        numberOfLines={5}
+        blurOnSubmit={false}
+      />
     </View>
 
-
-
-
+    <View style={ItemStyle}>
+      <Text style={input_header_style}> Ingrediants </Text>
+      <TextInput
+        style={inputStyle}
+        value={this.state.selectedItem.ingrediants}
+        onChangeText={text => {
+          this.setState({isSaving:true});
+        var ite;
+            ite=this.state.selectedItem;
+            ite.ingrediants=text;
+            this.setState({selectedItem: ite});
+            var itel;
+            itel = this.state.items;
+            itel[this.state.selectedIndex]=ite;
+            this.setState({items:itel});
+          AsyncStorage.multiSet([['recipeList', JSON.stringify(this.state.items)]]).then(()=>{
+            this.setState({
+              isSaving: false,
+            });
+            });
+        }}
+        multiline={true}
+        numberOfLines={5}
+        blurOnSubmit={false}
+      />
     </View>
+    </ScrollView>
   }
-
-    </View>
+</View>
   }
-  
 }
- 
+
 
 const styles = StyleSheet.create({
   container: {

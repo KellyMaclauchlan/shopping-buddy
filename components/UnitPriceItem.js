@@ -6,20 +6,24 @@ const remove_img = require('../icons/remove.png');
 const cart_img = require('../icons/cart.png');
 
 const itemStyle={
-  marginVertical: 10,
-  height: 60, 
+  marginVertical: 20,
+  height: 200, 
   borderColor: '#bbb', 
-  backgroundColor:'#fefefe',
+  backgroundColor:window.blue,
   borderWidth: 1,
   paddingHorizontal: 20,
   justifyContent:'space-between',
 };
 const inputStyle={
-  borderColor: '#bbb', 
   backgroundColor:'#fefefe',
   borderWidth: 1,
-  width:70,
-  justifyContent:'space-between',
+  borderRadius: 5,
+  borderColor: '#999',
+  borderWidth: 1,
+  display: 'block',
+  fontSize: 18,
+  height:35,
+  width:70
 };
 
 export default class UnitPriceItem extends React.Component {

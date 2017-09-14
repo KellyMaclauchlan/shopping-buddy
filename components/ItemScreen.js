@@ -1,140 +1,248 @@
 import React from 'react';
 
-import { 
-  StyleSheet, 
+import {
+  StyleSheet,
   Text,
-  View,  
-  Button, 
-  Alert, 
-  TouchableHighlight, 
+  View,
+  Button,
+  Alert,
+  TouchableHighlight,
   Image,
   TextInput,
   FlatList,
+  KeyboardAvoidingView,
+  ScrollView,
+  LayoutAnimation,
+  DeviceEventEmitter,
+  Keyboard,
+  Dimensions
 } from 'react-native';
-import { 
+import {
   List as REList,
   ListItem as REListItem,
   Button as REButton,
   Text as REText,
   Icon,
 } from 'react-native-elements';
-
+import DatePicker from 'react-native-datepicker'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 const _ = require('lodash');
+
 const inputStyle={
-  borderColor: '#bbb', 
   backgroundColor:'#fefefe',
   borderWidth: 1,
-  width:50,
-  justifyContent:'space-between',
+  borderRadius: 5,
+  borderColor: '#999',
+  borderWidth: 1,
+  display: 'block',
+  fontSize: 18,
+  height:35,
 };
 
-const TodoRect = ({children}) => (
-  <View style={ItemStyle}>
-    {children}
-  </View>
-);
+
 
 const ItemStyle={
-  marginVertical: 0,
-  height: 60, 
-  borderColor: '#bbb', 
-  backgroundColor:'#fefefe',
-  borderWidth: 1,
-  paddingHorizontal: 20,
-  paddingVertical: 10,
+  marginVertical: 20,
+  display: 'flex',
+  flexDirection: 'column',
 };
 
+const input_header_style={
+  fontWeight: 'bold',
+  fontSize: 20,
+}
 
-export default class ItemScreen extends React.Component {
+
+export class ItemScreen extends React.Component {
   static navigationOptions = {
     title: 'Item',
   };
   constructor(props){
     super(props)
+    console.log(props)
     this.state = {
-      items: _.map([
-        'All',
-        'Fridge',
-        'Freezer',
-        'Pantry',
-      ], text => ({ text, id: _.uniqueId() }) ),
-      showRecipie:false,
-      selectedIndex:0,
-      selectedItem:{name:"tuna can",quantity:"4", expireDate:"mar 14 2018", pantrySection:"fridge",notes:"this is good"},
-    };
+      item:props["item"],
+      visibleHeight:Dimensions.get('window').height,
+     };
+  }
+  // componentDidMount() {
+  //   //const { item} = this.props;
+  //  // this.setState({ item:this.props[item] });
+  // }
+//   componentWillMount() {
+//   DeviceEventEmitter.addListener('keyboardWillShow', this.keyboardWillShow.bind(this));
+//   DeviceEventEmitter.addListener('keyboardWillHide', this.keyboardWillHide.bind(this));
+// }
+
+// keyboardWillShow(e) {
+//   const visibleHeight = Dimensions.get('window').height - e.endCoordinates.height;
+//   LayoutAnimation.configureNext(LayoutAnimation.create(
+//     e.duration,
+//     LayoutAnimation.Types[e.easing]
+//   ));
+//   this.setState({ visibleHeight });
+// }
+ componentWillMount () {
+    this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', e => this._keyboardDidShow(e));
+    this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', e =>  this._keyboardDidHide(e) );
+  }
+
+  componentWillUnmount () {
+    this.keyboardDidShowListener.remove();
+    this.keyboardDidHideListener.remove();
+  }
+
+  _keyboardDidShow (e) {
+  const visibleHeight = Dimensions.get('window').height - e.endCoordinates.height;
+  LayoutAnimation.configureNext(LayoutAnimation.create(
+    e.duration,
+    LayoutAnimation.Types[e.easing]
+  ));
+  this.setState({ visibleHeight });
+  }
+
+  _keyboardDidHide (e) {
+    const visibleHeight = Dimensions.get('window').height ;
+    this.setState({ visibleHeight });
   }
 
   render() {
-    const { items, showRecipie } = this.state;
-    return <View>
-  <View>
-  <Text>{this.state.selectedIndex}</Text>
-  <View style={{flexDirection:'row'}}>
-  <Text> Name </Text>
-    <TextInput 
+    //const { item } = this.state;
+    const {onSave} = this.props;
+    const item=this.state.item;
+    const visibleHeight=this.state.visibleHeight;
+    console.log(visibleHeight);
+    var expire=item.expiryDate
+    if(expire===undefined){
+      expire=""
+    }
+    var notes=item.notes
+    if(notes===undefined){
+      notes=""
+    }
+    const pantryLocation= "Pantry Location:"
+    console.log("here")
+    return <KeyboardAwareScrollView
+      style={{flex: 1, backgroundColor: window.darkGrey}}
+      resetScrollToCoords={{ x: 0, y: 0 }}
+      scrollEnabled={true}
+    >
+  
+  <View >
+    <REButton
+      onPress= {()=> onSave(item)}
+      buttonStyle={{backgroundColor: window.warmPurple, borderRadius: 10,overflow: 'hidden'}}
+      textStyle={{textAlign: 'center'}}
+      title={`Save`}
+    />
+
+  <Text style={input_header_style}> Name </Text>
+    <TextInput
       style={inputStyle}
-      value={this.state.selectedItem.name}
-      onChangeText={text => { 
+      value={this.state.item.text}
+      onChangeText={text => {
       var ite
-          ite=this.state.selectedItem;
+          ite=this.state.item;
           ite.name=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
-    <View style={{flexDirection:'row'}}>
-  <Text> Quantity </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.q}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.quantity=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
-    <View style={{flexDirection:'row'}}>
-    <Text> Expire Date </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.expireDate}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.expireDate=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
-    <View style={{flexDirection:'row'}}>
-    <Text> Notes </Text>
-    <TextInput 
-      style={inputStyle}
-      value={this.state.selectedItem.notes}
-      onChangeText={text => { 
-      var ite
-          ite=this.state.selectedItem;
-          ite.notes=text;
-          this.setState({selectedItem: ite});
-        
-      }}
-    />
-    </View>
+          this.setState({item: ite});
 
-
+      }}
+    />
     </View>
-  
+    {
+      item.pantryLocation ?
+      <View style={ItemStyle}>
+        <Text style={input_header_style}> Pantry Location </Text>
+        <TextInput
+          style={inputStyle}
+          value={this.state.item.pantryLocation+""}
+          onChangeText={text => {
+          var ite
+              ite=this.state.item;
+              ite.pantryLocation=text;
+              this.setState({item: ite});
+          }}
+        />
+      </View>:null
+    }
 
+    <View style={ItemStyle}>
+      <Text style={input_header_style}> Quantity </Text>
+      <TextInput
+        style={inputStyle}
+        value={this.state.item.quantity+""}
+        onChangeText={text => {
+        var ite
+            ite=this.state.item;
+            ite.quantity=text;
+            this.setState({item: ite});
+        }}
+      />
     </View>
+  <View style={ItemStyle}>
+    <Text style={input_header_style}> Expire Date </Text>
+    <DatePicker
+        style={{width:320}}
+        date={expire}
+        mode="date"
+        placeholder="select date"
+        format="YYYY-MM-DD"
+        minDate="2017-05-01"
+        maxDate="2022-06-01"
+        confirmBtnText="Confirm"
+        cancelBtnText="Cancel"
+        customStyles={{
+          dateIcon: {
+            position: 'absolute',
+            left: 0,
+            top: 4,
+            marginLeft: 0
+          },
+          dateInput: {
+            backgroundColor:'#fefefe',
+            borderWidth: 1,
+            borderRadius: 5,
+            borderColor: '#999',
+            borderWidth: 1,
+            display: 'block',
+            fontSize: 18,
+            height:45,
+            overflow: 'hidden',
+            width:200
+          }
+          // ... You can check the source to find the other keys. 
+        }}
+        onDateChange={text => {
+      var ite
+          ite=this.state.item;
+          ite.expiryDate=text;
+          this.setState({item: ite});
+      }}
+      />
+    </View>
+    <View style={ItemStyle}>
+      <Text style={input_header_style}> Notes </Text>
+      <TextInput
+        style={Object.assign({},inputStyle,{ height: 80})}
+        value={notes}
+        multiline={true}
+        numberOfLines={5}
+        blurOnSubmit={false}
+        onChangeText={text => {
+        var ite
+            ite=this.state.item;
+            ite.notes=text;
+            this.setState({item: ite});
+
+        }}
+    />
+    </View>
+    </KeyboardAwareScrollView>
+    
   }
-  
+
 }
- 
+
 
 const styles = StyleSheet.create({
   container: {
